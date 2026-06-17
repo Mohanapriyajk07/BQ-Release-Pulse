@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigQuery Release Pulse - Stay Updated with Cloud Release Notes</title>
+  <meta name="description" content="An interactive web application to fetch, search, filter, and share Google Cloud BigQuery release notes.">
+  <meta name="keywords" content="BigQuery, Google Cloud, Release Notes, Database, Data Warehouse, Cloud Run">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%236366f1%22/><path d=%22M30 40 L50 65 L70 40%22 stroke=%22white%22 stroke-width=%228%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Background Glowing Blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- Header Section -->
+  <header id="main-header">
+    <div class="logo-container" id="logo-container">
+      <div class="logo-icon" id="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/>
+        </svg>
+      </div>
+      <span class="logo-text" id="logo-text">BQ Release Pulse</span>
+    </div>
+
+    <div class="controls" id="header-controls">
+      <div class="search-wrapper" id="search-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Search updates..." aria-label="Search updates">
+      </div>
+
+      <button id="btn-refresh" class="btn-refresh" aria-label="Refresh release notes">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+        <div class="spinner" id="refresh-spinner"></div>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero-section">
+    <h1 id="hero-title">BigQuery Release Radar</h1>
+    <p id="hero-subtitle">Stay up-to-date with the latest features, enhancements, deprecations, and fixes in Google Cloud BigQuery.</p>
+    
+    <div class="meta-info" id="meta-info">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="txt-last-updated">Checking for updates...</span>
+      <span id="txt-count-badge" style="display: none; background: rgba(255,255,255,0.08); padding: 0.15rem 0.5rem; border-radius: 9999px;">0 updates</span>
+    </div>
+  </section>
+
+  <!-- Filter Bar -->
+  <nav class="filter-bar" id="filter-bar" aria-label="Filter updates by type">
+    <button class="filter-btn active" data-type="all" id="filter-all">All Notes</button>
+    <button class="filter-btn" data-type="Feature" id="filter-feature">Features</button>
+    <button class="filter-btn" data-type="Announcement" id="filter-announcement">Announcements</button>
+    <button class="filter-btn" data-type="Issue" id="filter-issue">Issues / Fixes</button>
+    <button class="filter-btn" data-type="Deprecation" id="filter-deprecation">Deprecations</button>
+  </nav>
+
+  <!-- Feed Container -->
+  <main class="feed-container" id="feed-container">
+    <!-- Initial Loading State -->
+    <div class="state-box" id="loading-state">
+      <div class="state-spinner"></div>
+      <h3 class="state-title">Loading Release Notes</h3>
+      <p class="state-description">Fetching the latest feeds directly from Google Cloud documentation. Please hold on...</p>
+    </div>
+  </main>
+
+  <!-- Tweet Modal Overlay -->
+  <div class="modal-overlay" id="tweet-modal-overlay">
+    <div class="modal" id="tweet-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Share Update on Twitter</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close dialog">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="tweet-compose-box">
+        <textarea id="tweet-textarea" class="tweet-textarea" aria-label="Tweet message composer" maxlength="280"></textarea>
+        <div class="tweet-meta">
+          <span id="tweet-hashtag-hint">#BigQuery #GoogleCloud</span>
+          <span id="char-counter" class="char-counter">280</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btn-tweet-cancel">Cancel</button>
+        <button class="btn-tweet-send" id="btn-tweet-send">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.48.75 2.78 1.9 3.54-.7 0-1.36-.21-1.94-.53v.05c0 2.07 1.47 3.8 3.43 4.19-.36.1-.74.15-1.13.15-.28 0-.55-.03-.81-.08.54 1.7 2.12 2.93 4 2.97-1.47 1.15-3.32 1.83-5.32 1.83-.35 0-.69-.02-1.03-.06 1.9 1.22 4.17 1.93 6.61 1.93 7.93 0 12.27-6.57 12.27-12.27 0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+          </svg>
+          <span>Post Tweet</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
