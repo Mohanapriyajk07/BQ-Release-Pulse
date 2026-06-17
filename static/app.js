@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentFilter = 'all';
   let searchQuery = '';
   let selectedNote = null;
+  let visibleCount = 15;
 
   // DOM Elements
   const btnRefresh = document.getElementById('btn-refresh');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusDot = document.getElementById('status-dot');
   const btnExport = document.getElementById('btn-export');
   const themeToggle = document.getElementById('theme-toggle');
+  const btnBackToTop = document.getElementById('btn-back-to-top');
 
   // Tweet Modal DOM Elements
   const tweetModalOverlay = document.getElementById('tweet-modal-overlay');
@@ -48,6 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Export CSV Click Handler
   btnExport.addEventListener('click', exportToCSV);
 
+  // Back to Top Button Event Listeners
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      btnBackToTop.classList.add('show');
+    } else {
+      btnBackToTop.classList.remove('show');
+    }
+  });
+
+  btnBackToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // Load Initial Data
   fetchReleaseNotes();
 
@@ -58,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value.toLowerCase().trim();
+    visibleCount = 15; // Reset pagination count on search
     renderFeed();
   });
 
@@ -66,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       currentFilter = e.target.dataset.type;
+      visibleCount = 15; // Reset pagination count on filter change
       renderFeed();
     });
   });
@@ -89,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
       btnRefresh.classList.add('loading');
       btnRefresh.disabled = true;
     }
+
+    showSkeletonState(); // Render pulsing skeleton placeholders while fetching
 
     try {
       const response = await fetch('/api/releases');
@@ -143,10 +162,32 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    filteredNotes.forEach((note, index) => {
+    // Render sliced list according to visibleCount limit
+    const notesToRender = filteredNotes.slice(0, visibleCount);
+    notesToRender.forEach((note, index) => {
       const card = createNoteCard(note, index);
       feedContainer.appendChild(card);
     });
+
+    // Append a Load More button if there are remaining updates
+    if (filteredNotes.length > visibleCount) {
+      const loadMoreContainer = document.createElement('div');
+      loadMoreContainer.className = 'load-more-container';
+      loadMoreContainer.innerHTML = `
+        <button id="btn-load-more" class="btn-load-more" aria-label="Load more updates">
+          <span>Load More Updates</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </button>
+      `;
+      feedContainer.appendChild(loadMoreContainer);
+
+      document.getElementById('btn-load-more').addEventListener('click', () => {
+        visibleCount += 15;
+        renderFeed();
+      });
+    }
   }
 
   // Create Card Element
@@ -238,8 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
         <h3 class="state-title">No Updates Found</h3>
         <p class="state-description">Try adjusting your filters or searching for something else.</p>
+        <button id="btn-reset-filters" class="btn-reset-filters">Reset Filters & Search</button>
       </div>
     `;
+    document.getElementById('btn-reset-filters').addEventListener('click', resetFiltersAndSearch);
   }
 
   // Show Error State
@@ -257,6 +300,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-reload-page').addEventListener('click', () => {
       fetchReleaseNotes();
     });
+  }
+
+  // Show Pulsing Skeleton Loader Cards
+  function showSkeletonState() {
+    feedContainer.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const skeleton = document.createElement('div');
+      skeleton.className = 'skeleton-card';
+      skeleton.innerHTML = `
+        <div class="skeleton-line skeleton-title"></div>
+        <div class="skeleton-line skeleton-text-1" style="margin-top: 1.5rem;"></div>
+        <div class="skeleton-line skeleton-text-2"></div>
+        <div class="skeleton-line skeleton-text-3"></div>
+        <div class="skeleton-line skeleton-actions"></div>
+      `;
+      feedContainer.appendChild(skeleton);
+    }
+  }
+
+  // Reset Filters and Search Parameters
+  function resetFiltersAndSearch() {
+    searchInput.value = '';
+    searchQuery = '';
+    currentFilter = 'all';
+    filterBtns.forEach(b => {
+      b.classList.remove('active');
+      if (b.dataset.type === 'all') b.classList.add('active');
+    });
+    visibleCount = 15;
+    renderFeed();
+    showToast("Filters and search reset successfully!");
   }
 
   // Open Tweet Modal
@@ -335,12 +409,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
       
+      showToast("Note content copied to clipboard!");
+
       setTimeout(() => {
         btn.innerHTML = originalHTML;
         btn.style.borderColor = '';
       }, 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);
+      showToast("Failed to copy note content.");
     }
   }
 
@@ -356,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filteredNotes.length === 0) {
-      alert("No notes available to export with current filters!");
+      showToast("No notes available to export with current filters!");
       return;
     }
 
@@ -389,5 +466,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    showToast(`Successfully exported ${filteredNotes.length} updates to CSV!`);
+  }
+
+  // Show global toast notifications
+  function showToast(message) {
+    const toastContainer = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#6366f1" style="margin-right: 4px;">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+      </svg>
+      <span>${message}</span>
+    `;
+    toastContainer.appendChild(toast);
+
+    // Fade out and remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      toast.addEventListener('transitionend', () => {
+        toast.remove();
+      });
+    }, 3000);
   }
 });

@@ -913,3 +913,219 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+/* --- Skeleton Loading Screen --- */
+.skeleton-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  margin-left: 2rem;
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.skeleton-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+  animation: skeletonShimmer 1.6s infinite linear;
+}
+
+body.light-mode .skeleton-card::after {
+  background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.04), transparent);
+}
+
+@keyframes skeletonShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-line {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+body.light-mode .skeleton-line {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.skeleton-title {
+  width: 35%;
+  height: 20px;
+}
+
+.skeleton-text-1 {
+  width: 90%;
+  height: 14px;
+}
+
+.skeleton-text-2 {
+  width: 85%;
+  height: 14px;
+}
+
+.skeleton-text-3 {
+  width: 50%;
+  height: 14px;
+}
+
+.skeleton-actions {
+  width: 40%;
+  height: 30px;
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+/* --- Floating Back to Top Button --- */
+.btn-back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+  border: none;
+  color: white;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s, background-color 0.3s;
+}
+
+.btn-back-to-top.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.btn-back-to-top:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+}
+
+.btn-back-to-top:active {
+  transform: translateY(-1px);
+}
+
+/* --- Global Toast Notifications --- */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.toast {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 0.8rem 1.4rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+body.light-mode .toast {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast.fade-out {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* --- Load More Container & Button --- */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-left: 2rem;
+}
+
+.btn-load-more {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition: all var(--transition-speed);
+}
+
+.btn-load-more:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+body.light-mode .btn-load-more:hover {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.btn-load-more:active {
+  transform: translateY(0);
+}
+
+/* --- Reset Empty State Button --- */
+.btn-reset-filters {
+  background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+  border: none;
+  color: white;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+  transition: all var(--transition-speed);
+}
+
+.btn-reset-filters:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+}
+
+
