@@ -727,3 +727,189 @@ header {
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1.5rem;
 }
+
+/* --- Light Mode Scheme Overrides --- */
+body.light-mode {
+  --bg-color: #f8fafc; /* Slate 50 */
+  --panel-bg: rgba(255, 255, 255, 0.75);
+  --panel-border: rgba(15, 23, 42, 0.08);
+  
+  --primary-color: #4f46e5; /* Deeper indigo */
+  --primary-glow: rgba(79, 70, 229, 0.08);
+  
+  --feature-color: #059669; /* Deeper emerald */
+  --feature-glow: rgba(5, 150, 105, 0.08);
+  
+  --announcement-color: #2563eb; /* Deeper blue */
+  --announcement-glow: rgba(37, 99, 235, 0.08);
+  
+  --issue-color: #dc2626; /* Deeper red */
+  --issue-glow: rgba(220, 38, 38, 0.08);
+  
+  --deprecation-color: #d97706; /* Deeper amber */
+  --deprecation-glow: rgba(217, 119, 6, 0.08);
+  
+  --update-color: #7c3aed; /* Deeper violet */
+  --update-glow: rgba(124, 58, 237, 0.08);
+  
+  --text-main: #0f172a; /* Slate 900 */
+  --text-muted: #475569; /* Slate 600 */
+  --text-dark: #94a3b8; /* Slate 400 */
+}
+
+/* Light mode specifics */
+body.light-mode .blob {
+  opacity: 0.06;
+}
+
+body.light-mode header {
+  background: rgba(248, 250, 252, 0.8);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .logo-text {
+  background: linear-gradient(to right, #0f172a, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .hero h1 {
+  background: linear-gradient(to right, #0f172a, #334155);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .search-input {
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+}
+
+body.light-mode .search-input:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: var(--primary-color);
+}
+
+body.light-mode .filter-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text-main);
+}
+
+body.light-mode .filter-btn.active {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-main);
+  border-color: var(--primary-color);
+}
+
+body.light-mode .card-content strong {
+  color: #000000;
+}
+
+body.light-mode .card-content code {
+  background: rgba(15, 23, 42, 0.06);
+  color: #be123c;
+}
+
+body.light-mode .card-content a {
+  color: #0891b2; /* Deeper cyan/teal in light mode */
+  border-bottom-color: rgba(8, 145, 178, 0.2);
+}
+
+body.light-mode .card-content a:hover {
+  color: #0e7490;
+  border-bottom-color: #0e7490;
+}
+
+body.light-mode .modal {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .tweet-compose-box {
+  background: rgba(15, 23, 42, 0.02);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .tweet-textarea {
+  color: #0f172a;
+}
+
+body.light-mode .modal-close:hover {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+body.light-mode .btn-cancel:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+/* --- Theme Toggle Switch Styling --- */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 0.75rem;
+}
+
+.theme-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  user-select: none;
+  letter-spacing: 0.5px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  transition: .3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-muted);
+  transition: .3s;
+}
+
+input:checked + .slider {
+  background-color: rgba(99, 102, 241, 0.15);
+  border-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: var(--primary-color);
+}
+
+.slider.round {
+  border-radius: 20px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+

@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const txtLastUpdated = document.getElementById('txt-last-updated');
   const txtCountBadge = document.getElementById('txt-count-badge');
   const statusDot = document.getElementById('status-dot');
+  const btnExport = document.getElementById('btn-export');
+  const themeToggle = document.getElementById('theme-toggle');
 
   // Tweet Modal DOM Elements
   const tweetModalOverlay = document.getElementById('tweet-modal-overlay');
@@ -21,6 +23,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnTweetCancel = document.getElementById('btn-tweet-cancel');
   const btnTweetSend = document.getElementById('btn-tweet-send');
   const modalClose = document.getElementById('modal-close');
+
+  // Load Initial Theme from localStorage
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    themeToggle.checked = true;
+  } else {
+    document.body.classList.remove('light-mode');
+    themeToggle.checked = false;
+  }
+
+  // Theme Toggle Event Listener
+  themeToggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      document.body.classList.add('light-mode');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.body.classList.remove('light-mode');
+      localStorage.setItem('theme', 'dark');
+    }
+  });
+
+  // Export CSV Click Handler
+  btnExport.addEventListener('click', exportToCSV);
 
   // Load Initial Data
   fetchReleaseNotes();
@@ -157,6 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const actions = document.createElement('div');
     actions.className = 'card-actions';
 
+    // Copy Button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'action-btn copy-btn';
+    copyBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;">
+        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+      </svg>
+      <span>Copy</span>
+    `;
+    copyBtn.addEventListener('click', () => copyToClipboard(note, copyBtn));
+
     // Tweet Button
     const tweetBtn = document.createElement('button');
     tweetBtn.className = 'action-btn tweet-btn';
@@ -182,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     actions.appendChild(linkBtn);
+    actions.appendChild(copyBtn);
     actions.appendChild(tweetBtn);
 
     card.appendChild(header);
@@ -275,5 +313,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const tweetUrl = `https://twitter.com/intent/tweet?text=${text}`;
     window.open(tweetUrl, '_blank', 'noopener,noreferrer');
     closeTweetModal();
+  }
+
+  // Copy Release Note Details to Clipboard
+  async function copyToClipboard(note, btn) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = note.content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    const cleanedText = textContent.replace(/\s+/g, ' ').trim();
+    
+    const copyText = `BigQuery ${note.type} [${note.date}]:\n"${cleanedText}"\n\nRead more: ${note.link || 'https://cloud.google.com/bigquery/docs/release-notes'}`;
+
+    try {
+      await navigator.clipboard.writeText(copyText);
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#10b981" style="margin-right: 4px;">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        <span style="color: #10b981; font-weight: 600;">Copied!</span>
+      `;
+      btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+      
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.style.borderColor = '';
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }
+
+  // Export currently filtered notes to CSV file
+  function exportToCSV() {
+    const filteredNotes = releaseNotes.filter(note => {
+      const matchesFilter = currentFilter === 'all' || note.type.toLowerCase() === currentFilter.toLowerCase();
+      const matchesSearch = 
+        note.date.toLowerCase().includes(searchQuery) ||
+        note.type.toLowerCase().includes(searchQuery) ||
+        note.content.toLowerCase().includes(searchQuery);
+      return matchesFilter && matchesSearch;
+    });
+
+    if (filteredNotes.length === 0) {
+      alert("No notes available to export with current filters!");
+      return;
+    }
+
+    const headers = ['ID', 'Date', 'Type', 'Link', 'Content'];
+    const rows = filteredNotes.map(note => {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = note.content;
+      const plainContent = (tempDiv.textContent || tempDiv.innerText || '').replace(/"/g, '""').replace(/\s+/g, ' ').trim();
+      return [
+        `"${note.id}"`,
+        `"${note.date}"`,
+        `"${note.type}"`,
+        `"${note.link}"`,
+        `"${plainContent}"`
+      ];
+    });
+
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filterStr = currentFilter !== 'all' ? `_${currentFilter.toLowerCase()}` : '';
+    const searchStr = searchQuery ? `_search_${searchQuery.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery_releases_${dateStr}${filterStr}${searchStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 });
